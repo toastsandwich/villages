@@ -9,7 +9,7 @@ import (
 	"github.com/toastsandwich/villages/game"
 )
 
-func ConfigurPawn() (game.Pawn, error) {
+func ConfigurePawn() (game.Pawn, error) {
 	esprite, _, err := ebitenutil.NewImageFromFile("assets/Factions/Knights/Troops/Pawn/Blue/Pawn_Blue.png")
 	if err != nil {
 		return game.Pawn{}, err
@@ -53,17 +53,73 @@ func ConfigurPawn() (game.Pawn, error) {
 	return game.NewPawn(idleSprite, moveSprite, buildSprite, cuttingSprite), nil
 }
 
+func ConfigureGrass() (game.Grass, error) {
+	eimg, _, err := ebitenutil.NewImageFromFile("assets/Terrain/Ground/Tilemap_Flat.png")
+	if err != nil {
+		return game.Grass{}, err
+	}
+
+	var minx, miny int = 0, 0
+	var maxx, maxy int = 192, 192
+	g := eimg.SubImage(image.Rect(minx, miny, maxx, maxy)).(*ebiten.Image)
+
+	minx, miny = 0, 192
+	maxx, maxy = 192, 256
+	h := eimg.SubImage(image.Rect(minx, miny, maxx, maxy)).(*ebiten.Image)
+
+	minx, miny = 192, 0
+	maxx, maxy = 256, 192
+	v := eimg.SubImage(image.Rect(minx, miny, maxx, maxy)).(*ebiten.Image)
+
+	minx, miny = 192, 192
+	maxx, maxy = 256, 256
+	t := eimg.SubImage(image.Rect(minx, miny, maxx, maxy)).(*ebiten.Image)
+	return game.Grass{
+		G: g,
+		H: h,
+		V: v,
+		T: t,
+	}, nil
+}
+
+func Foam() ([]*ebiten.Image, error) {
+	eimg, _, err := ebitenutil.NewImageFromFile("assets/Terrain/Water/Foam/Foam.png")
+	if err != nil {
+		return nil, err
+	}
+	foam := make([]*ebiten.Image, 8)
+
+	for i := 0; i < 8; i++ {
+		minx := i * 192
+		maxx := 192 + minx
+
+		f := eimg.SubImage(image.Rect(minx, 0, maxx, 192)).(*ebiten.Image)
+		foam[i] = f
+	}
+	return foam, nil
+}
+
 func main() {
 	ebiten.SetWindowTitle("game")
-	ebiten.SetFullscreen(true)
+	// ebiten.SetFullscreen(true)
 	ebiten.SetWindowSize(1280, 720)
 
-	pawn, err := ConfigurPawn()
+	pawn, err := ConfigurePawn()
+	if err != nil {
+		log.Fatal(err)
+	}
+	grass, err := ConfigureGrass()
+	if err != nil {
+		log.Fatal(err)
+	}
+	foam, err := Foam()
 	if err != nil {
 		log.Fatal(err)
 	}
 	game := &game.Game{
-		Pawn: pawn,
+		Pawn:  pawn,
+		Grass: grass,
+		Foam:  foam,
 	}
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
